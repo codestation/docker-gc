@@ -1,0 +1,46 @@
+---
+kind: pipeline
+name: default
+type: docker
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+  - name: build
+    image: ghcr.io/codestation/drone-docker
+    settings:
+      repo: registry.megpoid.xyz/codestation/docker-gc
+      tags: latest
+      registry: registry.megpoid.xyz
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      buildkit: true
+      build_args:
+        - CI_COMMIT_TAG=${DRONE_TAG}
+        - CI_COMMIT_BRANCH=${DRONE_BRANCH}
+        - CI_COMMIT_SHA=${DRONE_COMMIT_SHA}
+        - CI_PIPELINE_CREATED_AT=${DRONE_BUILD_CREATED}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+
+  - name: update
+    image: plugins/webhook
+    settings:
+      urls: http://updater:8000/apis/swarm/v1/update
+      token_value:
+        from_secret: updater_appkey
+      template: |
+        {
+          "images": [
+            "registry.megpoid.xyz/codestation/docker-gc"
+          ]
+        }
+
+trigger:
+  branch:
+    - master
