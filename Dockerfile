@@ -1,4 +1,4 @@
-FROM docker:20.10
+FROM docker:23.0
 
 RUN apk --no-cache add bash
 
